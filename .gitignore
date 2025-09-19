@@ -1,0 +1,20 @@
+# Python Virtual Environment
+venv/
+
+# Cache dan file sementara
+__pycache__/
+*.pyc
+
+# Data sensitif dan data pengguna
+# Ini penting untuk menjaga privasi
+domains_*.txt
+schedule_*.json
+
+# Screenshot hasil bot
+nawala_check.png
+
+# File konfigurasi sensitif (Token Bot)
+.env
+
+# File yang dihasilkan secara lokal
+chromedriver.exe
