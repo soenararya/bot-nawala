@@ -36,11 +36,11 @@ IF EXIST "requirements.txt" (
 echo.
 rem Menambahkan perintah untuk memperbarui chromedriver secara otomatis
 echo [*] Memeriksa dan memperbarui chromedriver...
-python chromedriver.py
+python src/chromedriver.py
 
 echo.
 echo [*] Menjalankan file utama bot (main.py)...
-python main.py
+python src/main.py
 
 echo.
 echo [*] Proses selesai. Tekan tombol apa saja untuk keluar...

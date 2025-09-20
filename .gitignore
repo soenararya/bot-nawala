@@ -6,9 +6,8 @@ __pycache__/
 *.pyc
 
 # Data sensitif dan data pengguna
-# Ini penting untuk menjaga privasi
-domains_*.txt
-schedule_*.json
+# Folder user dan semua isinya akan diabaikan
+user/
 
 # Screenshot hasil bot
 nawala_check.png
@@ -17,4 +16,4 @@ nawala_check.png
 .env
 
 # File yang dihasilkan secara lokal
-chromedriver.exe
+src/chromedriver.exe

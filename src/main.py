@@ -22,10 +22,15 @@ load_dotenv()
 # Ini lebih aman karena token tidak ditulis langsung di dalam kode
 TOKEN = os.getenv("TOKEN")
 
-# Nama file dasar untuk menyimpan daftar domain per pengguna
-DOMAIN_FILE_BASE = "domains"
-# Nama file dasar untuk menyimpan jadwal per pengguna
-SCHEDULE_FILE_BASE = "schedule"
+# Tentukan jalur dasar, yaitu satu folder di atas lokasi skrip ini
+# Karena main.py berada di src/, ini akan mengarah ke folder utama botmu
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Tentukan folder tempat file user disimpan
+DATA_FOLDER = os.path.join(BASE_DIR, "user")
+# Gabungkan dengan nama file dasar
+DOMAIN_FILE_BASE = os.path.join(DATA_FOLDER, "domains")
+SCHEDULE_FILE_BASE = os.path.join(DATA_FOLDER, "schedule")
 # Interval pengecekan otomatis dalam detik (1 jam)
 CHECK_INTERVAL_SECONDS = 3600
 
@@ -38,9 +43,9 @@ def get_domain_filename(chat_id, username=None):
     """
     if username:
         safe_username = "".join(c for c in username if c.isalnum() or c in ('_', '-')).rstrip()
-        return f"{DOMAIN_FILE_BASE}_{safe_username}_{chat_id}.txt"
+        return os.path.join(DATA_FOLDER, f"domains_{safe_username}_{chat_id}.txt")
     else:
-        return f"{DOMAIN_FILE_BASE}_{chat_id}.txt"
+        return os.path.join(DATA_FOLDER, f"domains_{chat_id}.txt")
 
 def load_domains(chat_id, username=None):
     """Membaca daftar domain dari file untuk chat_id tertentu."""
@@ -48,7 +53,7 @@ def load_domains(chat_id, username=None):
     try:
         if not os.path.exists(filename):
             # Mencoba mencari file lama jika format baru tidak ditemukan
-            filename_old = f"{DOMAIN_FILE_BASE}_{chat_id}.txt"
+            filename_old = os.path.join(DATA_FOLDER, f"domains_{chat_id}.txt")
             if os.path.exists(filename_old):
                 os.rename(filename_old, filename)
             else:
@@ -62,6 +67,8 @@ def load_domains(chat_id, username=None):
 def save_domains(domains, chat_id, username=None):
     """Menyimpan daftar domain ke file untuk chat_id tertentu."""
     filename = get_domain_filename(chat_id, username)
+    # Pastikan direktori ada sebelum menulis file
+    os.makedirs(DATA_FOLDER, exist_ok=True)
     try:
         with open(filename, "w") as f:
             for domain in domains:
@@ -75,13 +82,14 @@ def get_schedule_filename(chat_id, username=None):
     """Membuat nama file jadwal unik untuk setiap chat_id."""
     if username:
         safe_username = "".join(c for c in username if c.isalnum() or c in ('_', '-')).rstrip()
-        return f"{SCHEDULE_FILE_BASE}_{safe_username}_{chat_id}.json"
+        return os.path.join(DATA_FOLDER, f"schedule_{safe_username}_{chat_id}.json")
     else:
-        return f"{SCHEDULE_FILE_BASE}_{chat_id}.json"
+        return os.path.join(DATA_FOLDER, f"schedule_{chat_id}.json")
 
 def save_schedule(chat_id, username, start_time):
     """Menyimpan waktu mulai job ke file JSON."""
     filename = get_schedule_filename(chat_id, username)
+    os.makedirs(DATA_FOLDER, exist_ok=True)
     try:
         with open(filename, 'w') as f:
             json.dump({'start_time': start_time.isoformat()}, f)
@@ -95,7 +103,7 @@ def load_schedule(chat_id, username):
         if os.path.exists(filename):
             with open(filename, 'r') as f:
                 data = json.load(f)
-                return datetime.fromisoformat(data['start_time'])
+            return datetime.fromisoformat(data['start_time'])
         return None
     except (IOError, json.JSONDecodeError, KeyError) as e:
         print(f"Error membaca atau memproses file jadwal {filename}: {e}")
@@ -137,7 +145,7 @@ async def _perform_domain_check(domain_names_list, username, update: Update, con
         
         log_message(username, "Menginisialisasi browser Chrome...")
         
-        # Tentukan jalur ke chromedriver.exe di folder yang sama dengan skrip ini
+        # Tentukan jalur ke chromedriver.exe di folder src/
         driver_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chromedriver.exe')
         
         # Buat objek Service yang menunjuk ke chromedriver.exe
@@ -380,9 +388,11 @@ def main():
     
     print("Mengecek jadwal otomatis yang tersimpan...")
     
-    file_pattern = f"{DOMAIN_FILE_BASE}_*.txt"
+    # Perbaikan jalur: glob sekarang mencari dari BASE_DIR
+    file_pattern = os.path.join(DATA_FOLDER, f"domains_*.txt")
     for filename in glob.glob(file_pattern):
-        match = re.search(f"^{DOMAIN_FILE_BASE}_(.+)_(\\d+)\\.txt$", filename)
+        # Perbaikan regex untuk mencocokkan nama file yang ada di folder user
+        match = re.search(r"domains_(.+)_(\d+)\.txt$", os.path.basename(filename))
         if match:
             username_from_file = match.group(1)
             chat_id_from_file = int(match.group(2))

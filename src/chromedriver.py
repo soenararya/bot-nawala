@@ -6,6 +6,9 @@ import io
 import shutil
 import subprocess
 
+# Tentukan lokasi penyimpanan untuk chromedriver.exe
+SAVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'chromedriver.exe')
+
 def find_chrome_version():
     """Mencari versi Google Chrome yang terinstal di Windows."""
     try:
@@ -61,14 +64,14 @@ def download_and_extract_chromedriver(chrome_version):
         file_request = requests.get(download_url)
         zip_file = zipfile.ZipFile(io.BytesIO(file_request.content))
         
-        # Mengekstrak chromedriver.exe ke direktori saat ini
+        # Mengekstrak chromedriver.exe ke lokasi yang ditentukan oleh SAVE_PATH
         for member in zip_file.namelist():
             if member.endswith('chromedriver.exe'):
-                with open("chromedriver.exe", "wb") as output_file:
+                with open(SAVE_PATH, "wb") as output_file:
                     shutil.copyfileobj(zip_file.open(member), output_file)
                 print("chromedriver.exe berhasil diupdate!")
                 return True
-                
+        
     except Exception as e:
         print(f"Terjadi error saat mengunduh/mengekstrak chromedriver: {e}")
         return False
@@ -79,9 +82,6 @@ if __name__ == "__main__":
     
     if chrome_version:
         print(f"Versi Chrome yang ditemukan: {chrome_version}")
-        if os.path.exists('chromedriver.exe'):
-            print("chromedriver.exe sudah ada. Lewati unduhan.")
-        else:
-            download_and_extract_chromedriver(chrome_version)
+        download_and_extract_chromedriver(chrome_version)
     else:
         print("Gagal menemukan versi Chrome. Silakan unduh driver secara manual.")
